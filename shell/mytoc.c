@@ -18,6 +18,8 @@ char ** mytoc(char *str, char delim){
             numToc++;
         }
     }
+    if(*(pStr-1) == delim)//if the string ends with the delimiter then there is one less token
+        numToc--;
     char **tokens = (char **)malloc(sizeof(char*) * (numToc+1));//allocate the memory for the tokens pointers
     int numChars = 0;
     char *tokStart = str;
@@ -40,7 +42,8 @@ char ** mytoc(char *str, char delim){
             tokStart = pStr+1;
         }
     }
-    *(tokens + curTokInd++) = substrCopy(tokStart, numChars);//store the last token
+    if(*(pStr-1) != delim)
+        *(tokens + curTokInd++) = substrCopy(tokStart, numChars);//store the last token if there is one
     *(tokens + curTokInd) = (char *)0;//null terminate tokens vector
     return tokens;
 }

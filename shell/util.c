@@ -37,3 +37,19 @@ int strlen(char *str){
     return i;
 }
 
+char * strcat(char *str, char *str2){
+    int len1 = strlen(str);
+    int len2 = strlen(str2);
+    char *cat = (char *)malloc((size_t)len1+len2+1);
+    char *pcat = cat;
+    for(int i = 0; i < len1; i++){
+        *pcat = *(str+i);
+        pcat++;
+    }
+    for(int i = 0; i < len2; i++){
+        *pcat = *(str2+i);
+        pcat++;
+    }
+    *pcat = 0;
+    return cat;
+}
