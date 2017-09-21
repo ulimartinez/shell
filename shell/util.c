@@ -53,3 +53,18 @@ char * strcat(char *str, char *str2){
     *pcat = 0;
     return cat;
 }
+/*
+ * check if the str is equal to str2
+ */
+short streq(char *str, char const *str2){
+    short ind = 0;
+    while(str[ind]==str2[ind]) {
+        if(str[ind]=='\0'||str2[ind]=='\0')
+            break;
+        ind++;
+    }
+    if(str[ind]=='\0' && str2[ind]=='\0')
+        return 1;
+    else
+        return 0;
+}

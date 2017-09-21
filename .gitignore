@@ -63,3 +63,6 @@ dkms.conf
 .idea/
 CMakeLists.txt
 cmake-build-debug/
+shell/CMakeCache.txt
+shell/CMakeFiles/
+shell/testLog.txt

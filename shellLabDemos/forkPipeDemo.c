@@ -27,7 +27,7 @@ int main(int argc, char**argv, char**envp)
 
     int waitVal, waitStatus;
     char buf[100];
-    int childStatus; 
+    int childStatus;
     printf("parent: child's pid=%d\n", pid);
     
     close(0);

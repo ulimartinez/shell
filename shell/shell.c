@@ -6,10 +6,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <sys/wait.h>
 #include "util.h"
 
 //function prototypes
-short streq(char *, char const *);
 
 char getDelimiter(char *optarg);
 
@@ -29,7 +29,10 @@ int main(int argc, char **argv, char **envp){
                 break;
         }
     }
+    int pid;
+    int waitVal, waitStatus;
     while(1){//inf loop to keep on reading strings to tokenize
+        char *command;
         write(1, "$", 2);
         char *str = getStdIn();//get input from user
         if(streq(str, "exit"))//check for exit string
@@ -37,8 +40,10 @@ int main(int argc, char **argv, char **envp){
         char **tokens = mytoc(str, delim);
         if(tokens){
             //check if command exists
-            if(checkComm(tokens[0]))
+            if(checkComm(tokens[0])) {
                 printf("Command %s exists\n", tokens[0]);
+                command = tokens[0];
+            }
             else{
                 char *path = getPath(envp);
                 char **bins = mytoc(path, ':');
@@ -48,11 +53,21 @@ int main(int argc, char **argv, char **envp){
                     if(checkComm(comm)) {
                         printf("Command %s exists\n", comm);
                         found = 1;
+                        command = comm;
                         break;
                     }
                 }
                 if(!found)
                     printf("%s: command not found\n", tokens[0]);
+                else{
+                    pid = fork();
+                    if(pid == 0){
+                        execve(command, tokens, envp);
+                    }
+                    else{
+                        waitpid(pid, &waitStatus, 0);
+                    }
+                }
             }
         }
     }
@@ -64,21 +79,6 @@ short checkComm(char *path){
 }
 char getDelimiter(char *optarg) {
     return *optarg;
-}
-/*
- * check if the input string is "exit"
- */
-short streq(char *str, char const *str2){
-    short ind = 0;
-    while(str[ind]==str2[ind]) {
-        if(str[ind]=='\0'||str2[ind]=='\0')
-            break;
-        ind++;
-    }
-    if(str[ind]=='\0' && str2[ind]=='\0')
-        return 1;
-    else
-        return 0;
 }
 
 char* getPath(char **envp){
