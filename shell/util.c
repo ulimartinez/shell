@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "util.h"
-#define MAX_CHARS 1000//maximum number of characters that can be inputed
 
 //helper functions
 /*
