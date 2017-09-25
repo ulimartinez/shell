@@ -23,7 +23,7 @@ int main(int argc, char **argv, char **envp){
     while(1){//inf loop to keep on prompting
         char *command = NULL;
         char *prompt = getPropmpt();
-        write(1, prompt, strlen(prompt));
+        write(STDOUT_FILENO, prompt, strlen(prompt));
         char *str = getStdIn();//get input from user
         if(streq(str, "exit"))//check for exit string
             return 0;
