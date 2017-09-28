@@ -1,5 +1,4 @@
 #include "mytoc.h"
-#include "strcopy.h"
 #include "util.h"
 #include <unistd.h>
 #include <stdlib.h>
@@ -20,7 +19,7 @@ char ** mytoc(char *str, char delim){
     }
     if(*(pStr-1) == delim)//if the string ends with the delimiter then there is one less token
         numToc--;
-    char **tokens = (char **)malloc(sizeof(char*) * (numToc+1));//allocate the memory for the tokens pointers
+    char **tokens = malloc(sizeof(char*) * (numToc+1));//allocate the memory for the tokens pointers
     int numChars = 0;
     char *tokStart = str;
     while(*(tokStart) == delim){//skip any delimiters at the beginning
@@ -46,13 +45,4 @@ char ** mytoc(char *str, char delim){
         *(tokens + curTokInd++) = substrCopy(tokStart, numChars);//store the last token if there is one
     *(tokens + curTokInd) = (char *)0;//null terminate tokens vector
     return tokens;
-}
-void printTokens(char ** tokens, char delim){
-    for(char **ptokens = tokens; *ptokens; ptokens++){
-        if(*(*ptokens) != delim)
-            write(1, *ptokens, (size_t)strlen(*ptokens));
-        free(*ptokens);
-        write(1, "\n", 1);
-    }
-    free(tokens);
 }

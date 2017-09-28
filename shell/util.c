@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include "util.h"
@@ -10,15 +11,7 @@ char* getStdIn(){
     char buf[MAX_CHARS];
     char *str;
     int i = read(0, buf, MAX_CHARS);
-    /*
-    for(int i = 0; i < MAX_CHARS; i++){
-      if(buf[i] == '\n'){
-        str = (char *)malloc(i);
-        break;
-      }
-    }
-    */
-    str = (char *)malloc(i);
+    str = malloc((size_t)i);
     char *pstr = str;
     for(int j = 0; j < i-1; j++){
         *(pstr++) = buf[j];
@@ -36,10 +29,10 @@ int strlen(char *str){
     return i;
 }
 
-char * strcat(char *str, char *str2){
+char * mystrcat(char *str, char *str2){
     int len1 = strlen(str);
     int len2 = strlen(str2);
-    char *cat = (char *)malloc((size_t)len1+len2+1);
+    char *cat = malloc((size_t)len1+len2+1);
     char *pcat = cat;
     for(int i = 0; i < len1; i++){
         *pcat = *(str+i);
@@ -66,4 +59,16 @@ short streq(char *str, char const *str2){
         return 1;
     else
         return 0;
+}
+/*
+ * function to copy a string, returns a new copy
+ */
+char* substrCopy(char *start, int len){
+    int i;
+    char *copy = malloc(len+1);
+    for(i = 0; i < len; i++){
+        *(copy + i) = *(start + i);
+    }
+    *(copy + i) = 0;
+    return copy;
 }
