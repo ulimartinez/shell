@@ -66,3 +66,5 @@ cmake-build-debug/
 shell/CMakeCache.txt
 shell/CMakeFiles/
 shell/testLog.txt
+shellLabDemos/*
+shell/ush
