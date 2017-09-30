@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS =
 HEADERS = mytoc.h
-OBJECTS = shell.o mytoc.o util.o strcopy.o
+OBJECTS = shell.o mytoc.o util.o
 default: all
 all: ush
 ush: $(OBJECTS)

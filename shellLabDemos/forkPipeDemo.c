@@ -16,9 +16,10 @@ int main(int argc, char**argv, char**envp)
 
     printf("child: fork returned %d\n", pid);
 
+    close(pipeFds[0]);
     close(1);
     dup(pipeFds[1]);
-    close(pipeFds[0]); close(pipeFds[1]);
+    //close(pipeFds[1]);
 
     printf("hello from child");
     exit(2);
@@ -29,10 +30,11 @@ int main(int argc, char**argv, char**envp)
     char buf[100];
     int childStatus;
     printf("parent: child's pid=%d\n", pid);
-    
+
+    close(pipeFds[1]);
     close(0);
     dup(pipeFds[0]);
-    close(pipeFds[0]); close(pipeFds[1]);
+    close(pipeFds[0]);
     
     fgets(buf, 100, stdin);
     printf("parent read <%s> from child\n", buf);

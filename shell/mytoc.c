@@ -46,3 +46,9 @@ char ** mytoc(char *str, char delim){
     *(tokens + curTokInd) = (char *)0;//null terminate tokens vector
     return tokens;
 }
+int veclen(char **vec){
+    size_t i = 0;
+    for(char **pvec = vec; *pvec != (char *)0; pvec++)
+        i++;
+    return i;
+}

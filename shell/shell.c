@@ -2,6 +2,7 @@
 // Created by ulimartinez on 9/12/17.
 //
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <wait.h>
@@ -11,7 +12,9 @@
 
 //function prototypes
 
-char* getPath(char **envp);
+char* getEnvVar(char **envp, char *var);
+
+short checKDir(char *path);
 
 short checkComm(char *path);
 
@@ -19,57 +22,82 @@ char* getPrompt();
 
 void freeVec(char **);
 
+char * getAbsComm(char *com, char **paths, char **envp);
+
 int main(int argc, char **argv, char **envp){
     int pid;
     int waitVal, waitStatus;
     char **paths = NULL;
-    char *prompt = getPrompt();//TODO: change this to inside the loop when cd (change directory) is implemented
+    int *pipedes = calloc(2, sizeof(int));
+    chdir(getEnvVar(envp, "HOME"));
     while(1){//inf loop to keep on prompting
+        char *prompt = getPrompt();
         char *command = NULL;
         write(STDOUT_FILENO, prompt, strlen(prompt));
         char *str = getStdIn();//get input from user
+        fflush(stdin);
         if(streq(str, "exit"))//check for exit string
             return 0;
-        char **tokens = mytoc(str, SPACE_DELIM);//tokenize the input from the prompt
+        char **pipes = mytoc(str, PIPE_DELIM);
         free(str);
-        if(tokens){
-            int found = 0;
-            //check if command exists
-            if(checkComm(tokens[0])) {
-                command = tokens[0];//command contains the full path to an executable
-                found = 1;
-            }
-            else{
-                if(!paths){//keep a copy of the path to not tokenize it every time
-                    char *path = getPath(envp);
-                    paths = mytoc(path, COLON_DELIM);//tokenize the $PATH env variable, each token is a directory with binary files
-                }
-                for(int i = 0; paths[i] != (char *)0; i++){//look for the command in all the path directories
-                    char *comm = mystrcat(mystrcat(paths[i], "/"), tokens[0]);
-                    if(checkComm(comm)) {//once found store the full path
-                        found = 2;
-                        command = comm;
-                        break;
+        if(veclen(pipes) > 0){
+            pipe(pipedes);
+            char **tokens = mytoc(pipes[0], SPACE_DELIM);//tokenize the input from the prompt
+            if(tokens){
+                //check if command exists
+                if(streq(tokens[0], "cd")){
+                    if(checKDir(tokens[1])){
+                        if(!chdir(tokens[1]))
+                            continue;
                     }
                 }
-            }
-            if(!found)
-                printf("%s: command not found\n", tokens[0]);
-            else{//if the command was found create a child process to run the command
-                pid = fork();
-                if(pid == 0){
-                    execve(command, tokens, envp);
-                }
-                else{
-                    waitVal = waitpid(pid, &waitStatus, 0);//wait until child terminates
-                    if(waitVal == pid && waitStatus != 0){//if the terminated child notify the exit code
-                        printf("Program terminated with exit code %d\n", waitStatus);
+                command = getAbsComm(tokens[0], paths, envp);
+                if(!command)
+                    printf("%s: command not found\n", tokens[0]);
+                else{//if the command was found create a child process to run the command
+                    pid = fork();
+                    if(pid == 0){
+                        if(veclen(pipes) > 1){
+                            close(pipedes[0]);
+                            dup2(pipedes[1], STDOUT_FILENO);
+                            close(pipedes[1]);
+                        }
+                        execve(command, tokens, envp);
+                    }
+                    else{
+                        waitVal = waitpid(pid, &waitStatus, 0);//wait until child terminates
+                        if(waitVal == pid && waitStatus != 0){//if the terminated child notify the exit code
+                            printf("Program terminated with exit code %d\n", waitStatus);
+                        }
+                        if(veclen(pipes) > 1){
+                            close(pipedes[1]);
+                            dup2(pipedes[0], STDIN_FILENO);
+                            pid = fork();
+                            if(pid == 0){
+                                char **tokens2 = mytoc(pipes[1], SPACE_DELIM);
+                                char *command2 = getAbsComm(tokens2[0], paths, envp);
+                                if(command2)
+                                    execve(command2, tokens2, envp);
+                                else{
+                                    printf("%s: command not found\n", tokens2[0]);
+                                }
+                            }
+                            else{
+                                waitVal = (pid, &waitStatus, 0);//wait until child terminates
+                                if(waitVal == pid){//if the terminated child notify the exit code
+                                    printf("Program terminated with exit code %d\n", waitStatus);
+                                }
+                                close(pipedes[0]);
+                                open(stdin, O_RDONLY);
+                                open(stdout, O_WRONLY);
+                            }
+                        }
                     }
                 }
-            }
-            if(found == 2)
                 free(command);
-            freeVec(tokens);
+                freeVec(tokens);
+                free(prompt);
+            }
         }
     }
 }
@@ -91,12 +119,19 @@ short checkComm(char *path){
     return(((stat(path, &sb) == 0) && (sb.st_mode & S_IXOTH))?(short)1:(short)0);
 }
 /*
+ * uses stat to check that a file directory exists
+ */
+short checKDir(char *path){
+    struct stat sb;
+    return(((stat(path, &sb) == 0) && (sb.st_mode & S_IFDIR))?(short)1:(short)0);
+}
+/*
  * Gets the path variable from the environment variables
  */
-char* getPath(char **envp){
+char* getEnvVar(char **envp, char *var){
     for(int i = 0; envp[i] != (char *)0; i++){
         char **toks = mytoc(envp[i], EQ_DELIM);
-        if(streq(toks[0], "PATH"))
+        if(streq(toks[0], var))
             return toks[1];
     }
     return NULL;
@@ -107,4 +142,27 @@ char* getPrompt(){
     char *prompt = mystrcat(ptr, "$");
     free(buf);
     return prompt;
+}
+/*
+ * returns the absolute path of a command or NULL if not found
+ */
+char * getAbsComm(char *com, char **paths, char **envp){
+    if(checkComm(com)) {
+        return substrCopy(com, strlen(com));
+    }
+    else{
+        if(!paths){//keep a copy of the path to not tokenize it every time
+            char *path = getEnvVar(envp, "PATH");
+            paths = mytoc(path, COLON_DELIM);//tokenize the $PATH env variable, each token is a directory with binary files
+        }
+        for(int i = 0; paths[i] != (char *)0; i++){//look for the command in all the path directories
+            char *str = mystrcat(paths[i], "/");
+            char *comm = mystrcat(str, com);
+            free(str);
+            if(checkComm(comm)) {//once found store the full path
+                return comm;
+            }
+        }
+        return NULL;
+    }
 }
