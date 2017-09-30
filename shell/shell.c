@@ -30,12 +30,14 @@ int main(int argc, char **argv, char **envp){
     char **paths = NULL;
     int *pipedes = calloc(2, sizeof(int));
     chdir(getEnvVar(envp, "HOME"));
+    int cstdin = dup(STDIN_FILENO);
+    int cstdout = dup(STDOUT_FILENO);
     while(1){//inf loop to keep on prompting
         char *prompt = getPrompt();
         char *command = NULL;
         write(STDOUT_FILENO, prompt, strlen(prompt));
         char *str = getStdIn();//get input from user
-        fflush(stdin);
+        //fflush(stdin);
         if(streq(str, "exit"))//check for exit string
             return 0;
         char **pipes = mytoc(str, PIPE_DELIM);
@@ -65,9 +67,11 @@ int main(int argc, char **argv, char **envp){
                         execve(command, tokens, envp);
                     }
                     else{
-                        waitVal = waitpid(pid, &waitStatus, 0);//wait until child terminates
-                        if(waitVal == pid && waitStatus != 0){//if the terminated child notify the exit code
-                            printf("Program terminated with exit code %d\n", waitStatus);
+                        if(!streq(tokens[veclen(tokens)-1], "&")){
+                            waitVal = waitpid(pid, &waitStatus, 0);//wait until child terminates
+                            if(waitVal == pid && waitStatus != 0){//if the terminated child notify the exit code
+                                printf("Program terminated with exit code %d\n", waitStatus);
+                            }
                         }
                         if(veclen(pipes) > 1){
                             close(pipedes[1]);
@@ -88,9 +92,8 @@ int main(int argc, char **argv, char **envp){
                                     printf("Program terminated with exit code %d\n", waitStatus);
                                 }
                                 close(pipedes[0]);
-                                open(stdin, O_RDONLY);
-                                open(stdout, O_WRONLY);
-                            }
+                                dup2(cstdin, STDIN_FILENO);
+                                dup2(cstdout, STDOUT_FILENO);                            }
                         }
                     }
                 }
