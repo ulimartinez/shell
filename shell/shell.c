@@ -33,9 +33,9 @@ int main(int argc, char **argv, char **envp){
     int cstdin = dup(STDIN_FILENO);
     int cstdout = dup(STDOUT_FILENO);
     while(1){//inf loop to keep on prompting
-        char *prompt = getPrompt();
+        //char *prompt = getPrompt();
         char *command = NULL;
-        write(STDOUT_FILENO, prompt, strlen(prompt));
+        //write(STDOUT_FILENO, prompt, strlen(prompt));
         char *str = getStdIn();//get input from user
         //fflush(stdin);
         if(streq(str, "exit"))//check for exit string
@@ -99,7 +99,7 @@ int main(int argc, char **argv, char **envp){
                 }
                 free(command);
                 freeVec(tokens);
-                free(prompt);
+                //free(prompt);
             }
         }
     }
