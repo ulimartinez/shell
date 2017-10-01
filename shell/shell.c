@@ -10,6 +10,9 @@
 #include "mytoc.h"
 #include "util.h"
 
+#define PIPE_READ_END 0
+#define PIPE_WRITE_END 0
+
 //function prototypes
 
 char* getEnvVar(char **envp, char *var);
@@ -32,6 +35,7 @@ int main(int argc, char **argv, char **envp){
     chdir(getEnvVar(envp, "HOME"));//set the initial directory of the shell to the $HOME environment variable
     int cstdin = dup(STDIN_FILENO);//save a copy of the stdin file descriptor
     int cstdout = dup(STDOUT_FILENO);//and the stdout as well
+    pipe(pipedes);//setup our pipe
     while(1){//inf loop to keep on prompting
         char *prompt = getPrompt();//the prompt has the cwd, so reset it in case cwd changed
         char *command = NULL;
@@ -41,8 +45,8 @@ int main(int argc, char **argv, char **envp){
         if(streq(str, "exit"))//check for exit string
             return 0;
         char **pipes = mytoc(str, PIPE_DELIM);//separate the input by commands that use pipes
-        if(veclen(pipes) > 0){
-            char **tokens = mytoc(pipes[0], SPACE_DELIM);//tokenize the input from the prompt
+        for(int i = 0; i < veclen(pipes); i++){
+            char **tokens = mytoc(pipes[i], SPACE_DELIM);//tokenize the input from the prompt
             if(tokens){
                 if(streq(tokens[0], "cd")){//if the first token is cd then
                     if(checKDir(tokens[1])){//check if the given path is a directory
@@ -57,10 +61,9 @@ int main(int argc, char **argv, char **envp){
                     pid = fork();
                     if(pid == 0){//if child
                         if(veclen(pipes) > 1){//case where we will need to pipe the output of the child
-                            pipe(pipedes);//setup our pipe
-                            close(pipedes[0]);//close the read end of the pipe (wont read anything from it)
-                            dup2(pipedes[1], STDOUT_FILENO);//dup the write end of the pipe to stdout, dup2 closes the fd if it is open
-                            close(pipedes[1]);//close the write end of the pipe TODO: don't close it if you will write to it again
+                            close(pipedes[PIPE_READ_END]);//close the read end of the pipe (wont read anything from it)
+                            dup2(pipedes[PIPE_WRITE_END], STDOUT_FILENO);//dup the write end of the pipe to stdout, dup2 closes the fd if it is open
+                            close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe TODO: don't close it if you will write to it again
                         }
                         execve(command, tokens, envp);
                     }
@@ -72,8 +75,8 @@ int main(int argc, char **argv, char **envp){
                             }
                         }
                         if(veclen(pipes) > 1){//case where we are using a pipe
-                            close(pipedes[1]);//close the write end of the pipe
-                            dup2(pipedes[0], STDIN_FILENO);//dup the read end of the pipe to stdin
+                            close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe
+                            dup2(pipedes[PIPE_READ_END], STDIN_FILENO);//dup the read end of the pipe to stdin
                             pid = fork();//create a new child process that will read input from the pipe
                             if(pid == 0){//second child
                                 char **tokens2 = mytoc(pipes[1], SPACE_DELIM);//tokenize what's after the pipe
@@ -92,7 +95,7 @@ int main(int argc, char **argv, char **envp){
                                 if(waitVal == pid){//if the terminated child notify the exit code
                                     printf("Program terminated with exit code %d\n", waitStatus);
                                 }
-                                close(pipedes[0]);//close the read end of pipe
+                                close(pipedes[PIPE_READ_END]);//close the read end of pipe
                                 dup2(cstdin, STDIN_FILENO);//reset the fd 0
                                 dup2(cstdout, STDOUT_FILENO);//reset fd 1
                             }
