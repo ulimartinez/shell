@@ -64,7 +64,7 @@ int main(int argc, char **argv, char **envp){
                         if(numCommands > 1 && i+1 != numCommands){//case where we will need to pipe the output of the child
                             close(pipedes[PIPE_READ_END]);//close the read end of the pipe (wont read anything from it)
                             dup2(pipedes[PIPE_WRITE_END], STDOUT_FILENO);//dup the write end of the pipe to stdout, dup2 closes the fd if it is open
-                            close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe TODO: don't close it if you will write to it again
+                            //close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe TODO: don't close it if you will write to it again
                         }
                         execve(command, tokens, envp);
                     }
@@ -87,12 +87,12 @@ int main(int argc, char **argv, char **envp){
                     }
                 }
                 //cleanup of memory
-                /*free(command);
+                free(command);
                 free(str);
                 freeVec(tokens);
-                free(prompt);*/
             }
         }
+        free(prompt);
     }
 }
 /*
