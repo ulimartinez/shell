@@ -68,3 +68,4 @@ shell/CMakeFiles/
 shell/testLog.txt
 shellLabDemos/*
 shell/ush
+shell/testShell.sh
