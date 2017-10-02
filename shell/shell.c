@@ -64,6 +64,9 @@ int main(int argc, char **argv, char **envp){
                             dup2(pipedes[1], STDOUT_FILENO);
                             close(pipedes[1]);
                         }
+                        if(streq(tokens[veclen(tokens)-1], "&")){
+                            removeLast(tokens);
+                        }
                         execve(command, tokens, envp);
                     }
                     else{

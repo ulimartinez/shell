@@ -52,3 +52,10 @@ int veclen(char **vec){
         i++;
     return i;
 }
+void removeLast(char **vec){
+    int len = veclen(vec);
+    free(*(vec + len));
+    free(*(vec + len-1));
+    *(vec+len-1) = malloc(1);
+    *(vec+len-1) = 0;
+}
