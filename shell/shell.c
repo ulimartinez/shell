@@ -83,8 +83,12 @@ int main(int argc, char **argv, char **envp){
                             if(pid == 0){
                                 char **tokens2 = mytoc(pipes[1], SPACE_DELIM);
                                 char *command2 = getAbsComm(tokens2[0], paths, envp);
-                                if(command2)
+                                if(command2) {
+                                    if(!streq(tokens2[veclen(tokens2)-1], "&")){
+                                        removeLast(tokens2);
+                                    }
                                     execve(command2, tokens2, envp);
+                                }
                                 else{
                                     printf("%s: command not found\n", tokens2[0]);
                                 }
