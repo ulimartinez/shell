@@ -11,7 +11,7 @@
 #include "util.h"
 
 #define PIPE_READ_END 0
-#define PIPE_WRITE_END 0
+#define PIPE_WRITE_END 1
 
 //function prototypes
 
@@ -45,8 +45,8 @@ int main(int argc, char **argv, char **envp){
         if(streq(str, "exit"))//check for exit string
             return 0;
         char **pipes = mytoc(str, PIPE_DELIM);//separate the input by commands that use pipes
-        int length = veclen(pipes);
-        for(int i = 0; i < length; i++){
+        int numCommands = veclen(pipes);
+        for(int i = 0; i < numCommands; i++){
             char **tokens = mytoc(pipes[i], SPACE_DELIM);//tokenize the input from the prompt
             if(tokens){
                 if(streq(tokens[0], "cd")){//if the first token is cd then
@@ -61,7 +61,7 @@ int main(int argc, char **argv, char **envp){
                 else{//if the command was found create a child process to run the command
                     pid = fork();
                     if(pid == 0){//if child
-                        if(length > 1 && i+1 != length){//case where we will need to pipe the output of the child
+                        if(numCommands > 1 && i+1 != numCommands){//case where we will need to pipe the output of the child
                             close(pipedes[PIPE_READ_END]);//close the read end of the pipe (wont read anything from it)
                             dup2(pipedes[PIPE_WRITE_END], STDOUT_FILENO);//dup the write end of the pipe to stdout, dup2 closes the fd if it is open
                             close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe TODO: don't close it if you will write to it again
@@ -75,22 +75,22 @@ int main(int argc, char **argv, char **envp){
                                 printf("Program terminated with exit code %d\n", waitStatus);
                             }
                         }
-                        if(length > 1 && length == i + 1){//reset the fds if the last command returned
+                        if(numCommands > 1 && numCommands == i + 1){//reset the fds if the last command returned
                             close(pipedes[PIPE_READ_END]);//close the read end of pipe
                             dup2(cstdin, STDIN_FILENO);//reset the fd 0
                             dup2(cstdout, STDOUT_FILENO);//reset fd 1
                         }
-                        else if(length > 1){//case where there are more commands that will read from pipe
+                        else if(numCommands > 1){//case where there are more commands that will read from pipe
                             close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe
                             dup2(pipedes[PIPE_READ_END], STDIN_FILENO);//dup the read end of the pipe to stdin
                         }
                     }
                 }
                 //cleanup of memory
-                free(command);
+                /*free(command);
                 free(str);
                 freeVec(tokens);
-                free(prompt);
+                free(prompt);*/
             }
         }
     }
