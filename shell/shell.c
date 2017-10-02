@@ -35,7 +35,6 @@ int main(int argc, char **argv, char **envp){
     chdir(getEnvVar(envp, "HOME"));//set the initial directory of the shell to the $HOME environment variable
     int cstdin = dup(STDIN_FILENO);//save a copy of the stdin file descriptor
     int cstdout = dup(STDOUT_FILENO);//and the stdout as well
-    pipe(pipedes);//setup our pipe
     while(1){//inf loop to keep on prompting
         char *prompt = getPrompt();//the prompt has the cwd, so reset it in case cwd changed
         char *command = NULL;
@@ -47,6 +46,7 @@ int main(int argc, char **argv, char **envp){
         char **pipes = mytoc(str, PIPE_DELIM);//separate the input by commands that use pipes
         int numCommands = veclen(pipes);
         for(int i = 0; i < numCommands; i++){
+            pipe(pipedes);//setup our pipe
             char **tokens = mytoc(pipes[i], SPACE_DELIM);//tokenize the input from the prompt
             if(tokens){
                 if(streq(tokens[0], "cd")){//if the first token is cd then
@@ -64,7 +64,7 @@ int main(int argc, char **argv, char **envp){
                         if(numCommands > 1 && i+1 != numCommands){//case where we will need to pipe the output of the child
                             close(pipedes[PIPE_READ_END]);//close the read end of the pipe (wont read anything from it)
                             dup2(pipedes[PIPE_WRITE_END], STDOUT_FILENO);//dup the write end of the pipe to stdout, dup2 closes the fd if it is open
-                            //close(pipedes[PIPE_WRITE_END]);//close the write end of the pipe TODO: don't close it if you will write to it again
+                            close(pipedes[PIPE_WRITE_END]);
                         }
                         execve(command, tokens, envp);
                     }
@@ -88,11 +88,11 @@ int main(int argc, char **argv, char **envp){
                 }
                 //cleanup of memory
                 free(command);
-                free(str);
                 freeVec(tokens);
             }
         }
         free(prompt);
+        free(str);
     }
 }
 /*
