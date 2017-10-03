@@ -14,6 +14,8 @@ This program is a basic shell that propmpts the user and executes commands if it
 
 All of these features have been tested in interactive mode. However, changing directory and background do not pass the test in [testShell.sh](testshell.sh).
 
+This shell starts in the HOME directory, taken from the environment.
+
 usage
 ----------------
 In order to build the project, navigate to the shell directory and run
