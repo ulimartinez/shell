@@ -21,7 +21,7 @@ short checKDir(char *path);
 
 short checkComm(char *path);
 
-char* getPrompt();
+char* getPrompt(char **envp);
 
 void freeVec(char **);
 
@@ -36,9 +36,10 @@ int main(int argc, char **argv, char **envp){
     int cstdin = dup(STDIN_FILENO);//save a copy of the stdin file descriptor
     int cstdout = dup(STDOUT_FILENO);//and the stdout as well
     while(1){//inf loop to keep on prompting
-        char *prompt = getPrompt();//the prompt has the cwd, so reset it in case cwd changed
+        char *prompt = getPrompt(envp);//the prompt has the cwd, so reset it in case cwd changed
         char *command = NULL;
-        write(STDOUT_FILENO, prompt, strlen(prompt));//print the prompt to standard out
+        if(prompt)
+            write(STDOUT_FILENO, prompt, strlen(prompt));//print the prompt to standard out
         char *str = getStdIn();//get input from user
         //fflush(stdin);
         if(streq(str, "exit"))//check for exit string
@@ -94,7 +95,8 @@ int main(int argc, char **argv, char **envp){
                 freeVec(tokens);
             }
         }
-        free(prompt);
+        if(prompt)
+            free(prompt);
         free(str);
     }
 }
@@ -136,12 +138,18 @@ char* getEnvVar(char **envp, char *var){
 /*
  * gets a prompt that includes cwd
  */
-char* getPrompt(){
-    char *buf = malloc(MAX_CHARS);
-    char *ptr = getcwd(buf, MAX_CHARS);
-    char *prompt = mystrcat(ptr, "$");
-    free(buf);
-    return prompt;
+char* getPrompt(char **envp){
+    char* promptString = getEnvVar(envp, "PS1");
+    if(promptString){
+        char *buf = malloc(MAX_CHARS);
+        char *ptr = getcwd(buf, MAX_CHARS);
+        char *prompt = mystrcat(ptr, "$");
+        free(buf);
+        free(promptString);
+        return prompt;
+    }
+    else
+        return (char *)0;
 }
 /*
  * returns the absolute path of a command or NULL if not found
