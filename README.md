@@ -12,7 +12,7 @@ This program is a basic shell that propmpts the user and executes commands if it
 - Background proceses
 - Changing directory (cd)
 
-All of these features have been tested in interactive mode. However, changing directory and background do not pass the test in [testShell.sh](testshell.sh).
+All of these features have been tested in interactive mode. However, changing directory and background do not pass the test in [testShell.sh](testShell.sh).
 
 This shell starts in the HOME directory, taken from the environment.
 
