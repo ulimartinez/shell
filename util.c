@@ -22,7 +22,7 @@ char* getStdIn(){
 /*
  * gets the length of a null terminated string
  */
-int strlen(char *str){
+int strlength(char *str){
     int i = 0;
     for(char *pstr = str; *pstr; pstr++)
         i++;
@@ -30,8 +30,9 @@ int strlen(char *str){
 }
 
 char * mystrcat(char *str, char *str2){
-    int len1 = strlen(str);
-    int len2 = strlen(str2);
+    int len1 = strlength(str);
+    int len2 = strlength(str2);
+    printf("len1 is %u and 2 is %u", len1, len2);
     char *cat = malloc((size_t)len1+len2+1);
     char *pcat = cat;
     for(int i = 0; i < len1; i++){

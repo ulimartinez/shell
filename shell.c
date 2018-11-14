@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "mytoc.h"
 #include "util.h"
+#include <curses.h>
 
 #define PIPE_READ_END 0
 #define PIPE_WRITE_END 1
@@ -39,7 +40,7 @@ int main(int argc, char **argv, char **envp){
         char *prompt = getPrompt(envp);//the prompt has the cwd, so reset it in case cwd changed
         char *command = NULL;
         if(prompt)
-            write(STDOUT_FILENO, prompt, strlen(prompt));//print the prompt to standard out
+            write(STDOUT_FILENO, prompt, strlength(prompt));//print the prompt to standard out
         char *str = getStdIn();//get input from user
         //fflush(stdin);
         if(streq(str, "exit"))//check for exit string
@@ -55,6 +56,9 @@ int main(int argc, char **argv, char **envp){
                         if(!chdir(tokens[1]))//change to that directory
                             continue;//skip to next iteration of loop i.e. ask for next command
                     }
+                }
+                if(streq(tokens[0], "clear")){
+                    mvprintw(0, 0, "hello");
                 }
                 command = getAbsComm(tokens[0], paths, envp);//get the absolute path of the command typed
                 if(!command)
@@ -140,23 +144,29 @@ char* getEnvVar(char **envp, char *var){
  */
 char* getPrompt(char **envp){
     char* promptString = getEnvVar(envp, "PS1");
+    char *prompt;
     if(promptString){
         char *buf = malloc(MAX_CHARS);
         char *ptr = getcwd(buf, MAX_CHARS);
-        char *prompt = mystrcat(ptr, "$");
+        prompt = mystrcat(ptr, "$ ");
         free(buf);
         free(promptString);
         return prompt;
     }
-    else
-        return (char *)0;
+    else{
+        prompt = malloc(3);
+        *prompt = '$';
+        *(prompt + 1) = ' ';
+        *(prompt + 2) = '\0';
+    }
+        return prompt;
 }
 /*
  * returns the absolute path of a command or NULL if not found
  */
 char * getAbsComm(char *com, char **paths, char **envp){
     if(checkComm(com)) {
-        return substrCopy(com, strlen(com));
+        return substrCopy(com, strlength(com));
     }
     else{
         if(!paths){//keep a copy of the path to not tokenize it every time

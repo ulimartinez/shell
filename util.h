@@ -1,5 +1,5 @@
 char* getStdIn();
-int strlen(char *str);
+int strlength(char *str);
 char * mystrcat(char *str, char *str2);
 short streq(char *str, char const *str2);
 char* substrCopy(char *start, int len);

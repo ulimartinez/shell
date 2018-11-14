@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+
 char ** mytoc(char *str, char delim){
     if(!*str)//return null when there is no string
         return NULL;
